@@ -1,0 +1,11 @@
+# Ignore these libraries alltogether
+Libraries/
+x64/
+VoxelCube/x64/
+
+# Ignore all logs
+*.log
+
+# Ignore VS project
+*.vcxproj*
+

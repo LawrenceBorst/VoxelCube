@@ -1,0 +1,5 @@
+/.vs/
+Libraries/
+x64/
+
+*.vcxproj*
