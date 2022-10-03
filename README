@@ -1,1 +1,8 @@
-VoxelCube
+**VoxelCube**
+
+WORK IN PROGRESS
+Simple voxel game using chunked procedural map rendering.
+
+Todo:
+- change the map octree into a DAG for compression
+- Create chunk manager (loader and deloader)
