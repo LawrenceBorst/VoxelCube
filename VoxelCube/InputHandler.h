@@ -1,5 +1,4 @@
-#ifndef INPUT_HANDLER_H
-#define INPUT_HANDLER_H
+#pragma once
 
 #include <GLFW/glfw3.h>
 #include "Command.h";
@@ -15,6 +14,4 @@ private:
 	Command* buttonS_;
 	Command* buttonD_;
 };
-
-#endif
 

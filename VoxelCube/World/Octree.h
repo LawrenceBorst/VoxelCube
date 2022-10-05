@@ -15,6 +15,7 @@
 #include "glm/glm.hpp"
 #include <cstdint>
 #include <unordered_map>
+#include "../Core/Renderer.h"
 
 /* Not compact, but elegant enough */
 struct OctreeNode {
@@ -42,10 +43,10 @@ public:
 
 	/* Renders the node at a given level of detail. A detail of 0 means just one block for this node.
 	A detail of 1 means 8 blocks inside the node are also seen etc. */
-	void RenderNode(uint32_t LocCode, size_t detail);
+	void RenderNode(Renderer renderer, uint32_t LocCode, size_t detail);
 	
 	/* Renders the node as one big block, without considering child nodes */
-	void RenderNode(uint32_t LocCode);
+	void RenderNode(Renderer renderer, uint32_t LocCode);
 	
 private:
 	OctreeNode root;

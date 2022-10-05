@@ -8,6 +8,7 @@
 #include <ctime>
 #include <filesystem>
 #include "Core/Camera.h"
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
@@ -29,7 +30,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // Camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(-1.0f, -1.0f, -1.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -40,6 +41,9 @@ float lastFrame = 0.0f;
 
 // lighting
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
+// Renderer
+Renderer grenderer;
 
 int main() {
     // Initialize window
@@ -83,72 +87,10 @@ int main() {
     glEnable(GL_MULTISAMPLE);
 
     // Build and compile shader
-    BlockShader lightingShader("Core/VertexShader.txt", "Core/FragmentShader.txt");
+    BlockShader blockShader("Core/VertexShader.txt", "Core/FragmentShader.txt");
 
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    int vertices[] = {
-        // positions (3) normals (3)
-        -1, -1, -1, 0, 0, -1,
-         1,  1, -1, 0, 0, -1,
-         1, -1, -1, 0, 0, -1,
-         1,  1, -1, 0, 0, -1,
-        -1, -1, -1, 0, 0, -1,
-        -1,  1, -1, 0, 0, -1,
-
-        -1, -1,  1, 0, 0, 1,
-         1, -1,  1, 0, 0, 1,
-         1,  1,  1, 0, 0, 1,
-         1,  1,  1, 0, 0, 1,
-        -1,  1,  1, 0, 0, 1,
-        -1, -1,  1, 0, 0, 1,
-
-        -1,  1,  1, -1, 0, 0,
-        -1,  1, -1, -1, 0, 0,
-        -1, -1, -1, -1, 0, 0,
-        -1, -1, -1, -1, 0, 0,
-        -1, -1,  1, -1, 0, 0,
-        -1,  1,  1, -1, 0, 0,
-
-         1,  1,  1, 1, 0, 0,
-         1, -1, -1, 1, 0, 0,
-         1,  1, -1, 1, 0, 0,
-         1, -1, -1, 1, 0, 0,
-         1,  1,  1, 1, 0, 0,
-         1, -1,  1, 1, 0, 0,
-
-        -1, -1, -1, 0, -1, 0,
-         1, -1, -1, 0, -1, 0,
-         1, -1,  1, 0, -1, 0,
-         1, -1,  1, 0, -1, 0,
-        -1, -1,  1, 0, -1, 0,
-        -1, -1, -1, 0, -1, 0,
-
-        -1,  1, -1, 0, 1, 0,
-         1,  1,  1, 0, 1, 0,
-         1,  1, -1, 0, 1, 0,
-         1,  1,  1, 0, 1, 0,
-        -1,  1, -1, 0, 1, 0,
-        -1,  1,  1, 0, 1, 0,
-    };
-
-    // Cube VBO and VAO
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindVertexArray(VAO);
-    glVertexAttribPointer(0, 3, GL_INT, GL_FALSE, 6 * sizeof(int), (void*)0);    // position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_INT, GL_TRUE, 6 * sizeof(int), (void*)(3 * sizeof(int)));    // normals
-    glEnableVertexAttribArray(1);
-
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
+    grenderer.CreateCube(0, 0, 1, 3);
+    grenderer.StageMesh(2, 2);
 
     /******************
      * MAIN GAME LOOP *
@@ -205,35 +147,17 @@ int main() {
         /*********
         * RENDER *
         **********/
-        glClearColor(0.44f, 0.73f, 0.87f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // be sure to activate shader when setting uniforms/drawing objects
-        lightingShader.use();
-        lightingShader.setVec3("objectColor", 1.0f, 0.8f, 0.5f);
-        lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-
-        // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
-        lightingShader.setMat4("projection", projection);
-        lightingShader.setMat4("view", view);
-
-        // world transformation
-        glm::mat4 model = glm::mat4(1.0f);
-        lightingShader.setMat4("model", model);
-
-        // render the cube
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        grenderer.RenderMesh(blockShader, camera, SCR_WIDTH, SCR_HEIGHT);
 
         // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
+    grenderer.UnbindMesh();
 
     glfwTerminate();
     return 0;
