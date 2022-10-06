@@ -80,21 +80,30 @@ void Renderer::CreateCube(uint32_t x, uint32_t y, uint32_t z, uint32_t width) {
 	return;
 };
 
-void Renderer::RenderMesh(BlockShader shader, Camera camera, const unsigned int WIDTH, const unsigned int HEIGHT) {
+void Renderer::RenderMesh(BlockShader * shader, Camera camera, const unsigned int WIDTH, const unsigned int HEIGHT) {
     // be sure to activate shader when setting uniforms/drawing objects
-    shader.use();
-    shader.setVec3("objectColor", 1.0f, 0.8f, 0.5f);
-    shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    shader->use();
+    shader->setVec3("objectColor", 1.0f, 0.8f, 0.5f);
+    shader->setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    shader->setVec3("light.direction", -0.2f, -1.0f, -0.3f);
+    shader->setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+    shader->setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+    shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+    shader->setFloat("material.shininess", 32.0f);
+    shader->setInt("material.diffuse", 0);
+    shader->setInt("material.specular", 1);
 
     // view/projection transformations
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 10000.0f);
     glm::mat4 view = camera.GetViewMatrix();
-    shader.setMat4("projection", projection);
-    shader.setMat4("view", view);
+    shader->setMat4("projection", projection);
+    shader->setMat4("view", view);
+    shader->setVec3("viewPos", camera.Position);
+
 
     // world transformation
     glm::mat4 model = glm::mat4(1.0f);
-    shader.setMat4("model", model);
+    shader->setMat4("model", model);
 
     // render the cube
     glBindVertexArray(this->VAO);

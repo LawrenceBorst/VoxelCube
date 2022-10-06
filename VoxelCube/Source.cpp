@@ -86,11 +86,28 @@ int main() {
     glEnable(GL_CULL_FACE);
     glEnable(GL_MULTISAMPLE);
 
-    // Build and compile shader
-    BlockShader blockShader("Core/VertexShader.txt", "Core/FragmentShader.txt");
+    Octree gWorld = Octree();
+    glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    
+    //gWorld.InsertNode((uint32_t)(103), color);    // 000...01100111
+    /*
+    gWorld.InsertNode((uint32_t)(pow(2, 30)), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(pow(2, 30) + pow(2, 2) + pow(2,1)), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(pow(2, 30) + pow(2, 1)), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(pow(2, 30) + pow(2, 2) + pow(2, 1)), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(pow(2, 30) + pow(2, 2) + pow(2, 1)), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(pow(2, 30) + pow(2, 4) + pow(2, 3)), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(123), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(53258), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(8333), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(pow(2, 27) + pow(2, 6)), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(pow(2, 24) + pow(2, 9)), color);    // 000...01100111
+    gWorld.InsertNode((uint32_t)(pow(2, 21) + pow(2, 12)), color);    // 000...01100111
+    */
+    gWorld.InsertRandomNodes(&grenderer, 10);
 
-    grenderer.CreateCube(0, 0, 1, 3);
-    grenderer.StageMesh(2, 2);
+    gWorld.CreateMesh(&grenderer, (uint32_t)(1), 11);
+    gWorld.StageMesh(&grenderer);
 
     /******************
      * MAIN GAME LOOP *
@@ -147,10 +164,10 @@ int main() {
         /*********
         * RENDER *
         **********/
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.20f, 0.78f, 0.94f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        grenderer.RenderMesh(blockShader, camera, SCR_WIDTH, SCR_HEIGHT);
+        gWorld.Render(&grenderer, camera, SCR_WIDTH, SCR_HEIGHT);
 
         // Swap buffers
         glfwSwapBuffers(window);

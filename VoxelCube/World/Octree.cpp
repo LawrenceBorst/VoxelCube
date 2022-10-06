@@ -1,18 +1,40 @@
 #include "Octree.h"
+#include <random>
 
 Octree::Octree() {
-	OctreeNode node = OctreeNode();	// Zero initialize octree
-	node.LocCode = 1;	// 0...0001. A depth of 0
+	root = new OctreeNode();	// Zero initialize octree
+	root->LocCode = 1;	// 0...0001. A depth of 0
 }
 
 Octree::~Octree() {
+	DeleteNode(root);	// Delete root
 	return;
+}
+
+void Octree::DeleteNode(uint32_t LocCode) {
+	OctreeNode* node = GetNode(LocCode);
+	DeleteNode(node);
+	return;
+}
+
+void Octree::DeleteNode(OctreeNode* node) {
+	if (node == nullptr) {
+		return;
+	}
+
+	for (int i = 0; i < 8; i++) {
+		if (node->Children[i] != nullptr) {
+			DeleteNode(node->Children[i]);
+		}
+	}
+	delete node;
+	node = nullptr;
 }
 
 OctreeNode* Octree::GetNode(uint32_t LocCode) {
 	uint32_t depth = GetLocDepth(LocCode);
-	unsigned short shift = depth * 3;
-	OctreeNode* currentNode = &root;
+	unsigned short shift = depth * 3 - 3;
+	OctreeNode* currentNode = root;
 	// Work our way downs. The bitwise shift just extracts the relevant index
 	for (int i = 0; i < depth; i++) {
 		OctreeNode* nextNode = currentNode->Children[(LocCode >> shift) & 7];
@@ -24,22 +46,23 @@ OctreeNode* Octree::GetNode(uint32_t LocCode) {
 
 void Octree::InsertNode(uint32_t LocCode, glm::vec4 color) {
 	uint32_t depth = GetLocDepth(LocCode);
-	unsigned short shift = 3;
-	OctreeNode* currentNode = &root;
+	unsigned short shift = 3 * depth - 3;
+	OctreeNode* currentNode = root;
 	// Work our way downs. The bitwise shift just extracts the relevant index
 	for (int i = 0; i < depth; i++) {
 		// Need to create the child if it doesn't exist
-		if (currentNode->Children[(LocCode >> shift) & 7] == nullptr) {
-			currentNode->Children[(LocCode >> shift) & 7] = new OctreeNode();	// TODO: need to delete this as well eventually
-			currentNode->Children[(LocCode >> shift) & 7]->Parent = currentNode;
+		if (currentNode->Children[(LocCode >> shift & 7)] == nullptr) {
+			currentNode->Children[(LocCode >> shift & 7)] = new OctreeNode();	// TODO: need to delete this as well eventually
+			currentNode->Children[(LocCode >> shift & 7)]->Parent = currentNode;
+			currentNode->Children[(LocCode >> shift & 7)]->LocCode = ((currentNode->LocCode) << 3) + ((LocCode >> shift) & 7);
 		}
+		OctreeNode* nextNode = currentNode->Children[(LocCode >> shift & 7)];
 		
-		// Work our way down one LOD
-		OctreeNode* nextNode = currentNode->Children[(LocCode >> shift) & 7];
 		currentNode = nextNode;
-		shift += 3;
+		shift -= 3;
 	}
 	currentNode->color = color;
+	currentNode->isLeaf = true;
 }
 
 void Octree::RemoveNode(uint32_t LocCode) {
@@ -56,11 +79,16 @@ uint32_t Octree::GetLocDepth(uint32_t LocCode) {
 #endif
 }
 
-void Octree::RenderNode(Renderer renderer, uint32_t LocCode, size_t detail) {
+void Octree::CreateMesh(Renderer * renderer, uint32_t LocCode, size_t detail) {
 	size_t depth = GetLocDepth(LocCode);
+	if (depth == Octree::MAXDEPTH) {
+		CreateMesh(renderer, LocCode);
+		return;
+	}
+
 	// If we're at the required LOD, render
 	if (detail == 0) {
-		RenderNode(renderer, LocCode);
+		CreateMesh(renderer, LocCode);
 		return;
 	}
 
@@ -75,28 +103,63 @@ void Octree::RenderNode(Renderer renderer, uint32_t LocCode, size_t detail) {
 		}
 	}
 
-	// If this is a leaf, we render
+	// If this is a leaf, we create the block
 	if (!hasChildren) {
+		CreateMesh(renderer, LocCode);
 		return;
 	}
 
 	// Finally, if still not rendered, then clearly we must be rendering the available children at a higher LOD
 	for (int i = 0; i < 8; i++) {
 		if (node->Children[i] == nullptr) { continue; }
-		Octree::RenderNode(renderer, node->Children[i]->LocCode, detail - 1);
+		Octree::CreateMesh(renderer, node->Children[i]->LocCode, detail - 1);
 	}
 }
 
-void Octree::RenderNode(Renderer renderer, uint32_t LocCode) {
+void Octree::CreateMesh(Renderer * renderer, uint32_t LocCode) {
 	size_t depth = GetLocDepth(LocCode);
-	uint32_t size = 2 ^ (Octree::MAXDEPTH - depth);	// Size of the cube
+	uint32_t size = pow(2, (Octree::MAXDEPTH - depth));	// Size of the cube
 	uint32_t x=0, y=0, z=0;
 
 	for (int i = 0; i < depth; i++) {
-		x += ((bool)(LocCode & (1 << (i * 3 + 2)))) * (2 ^ (Octree::MAXDEPTH - depth + i));
-		y += ((bool)(LocCode & (1 << (i * 3 + 1)))) * (2 ^ (Octree::MAXDEPTH - depth + i));
-		z += ((bool)(LocCode & (1 << (i * 3 + 0)))) * (2 ^ (Octree::MAXDEPTH - depth + i));
+		x += ((bool)(LocCode & (1 << (i * 3 + 2)))) * (pow(2, (Octree::MAXDEPTH - depth + i)));
+		y += ((bool)(LocCode & (1 << (i * 3 + 1)))) * (pow(2, (Octree::MAXDEPTH - depth + i)));
+		z += ((bool)(LocCode & (1 << (i * 3 + 0)))) * (pow(2, (Octree::MAXDEPTH - depth + i)));
 	}
 
+	renderer->CreateCube(x, y, z, size);
+}
 
+void Octree::StageMesh(Renderer * renderer) {
+	renderer->StageMesh(1, 1);
+}
+
+void Octree::Render(Renderer * renderer, Camera camera, const unsigned int WIDTH, const unsigned int HEIGHT) {
+	renderer->RenderMesh(&blockShader, camera, WIDTH, HEIGHT);
+}
+
+void Octree::InsertRandomNodes(Renderer* renderer, size_t depth=Octree::MAXDEPTH) {
+	InsertRandomNodes(renderer, root, depth);
+}
+
+void Octree::InsertRandomNodes(Renderer * renderer, OctreeNode* node, size_t depth=Octree::MAXDEPTH) {
+	if (GetLocDepth(node->LocCode) == depth) {
+		return;
+	}
+	
+	int r;
+	for (int i = 0; i < 3; i++) {
+		srand(node->LocCode * i);
+		r = rand() % 8;
+		if (node->Children[r] == nullptr) {
+			node->Children[r] = new OctreeNode();
+			node->Children[r]->LocCode = ((node->LocCode) << 3) + (r);
+		}
+	}
+
+	for (int i = 0; i < 8; i++) {
+		if (node->Children[i] != nullptr) {
+			InsertRandomNodes(renderer, node->Children[i], depth);
+		}
+	}
 }

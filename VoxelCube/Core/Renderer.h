@@ -18,7 +18,7 @@ public:
 	void CreateCube(uint32_t x, uint32_t y, uint32_t z, uint32_t width);
 
 	/* For now, does multiple things. TODO: Split this up into smaller bits */
-	void RenderMesh(BlockShader shader, Camera camera, const unsigned int WIDTH, const unsigned int HEIGHT);
+	void RenderMesh(BlockShader * shader, Camera camera, const unsigned int WIDTH, const unsigned int HEIGHT);
 
 	/* Unbind VAO and VBO */
 	void UnbindMesh();

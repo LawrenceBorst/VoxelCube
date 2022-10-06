@@ -29,10 +29,17 @@ struct OctreeNode {
 };
 
 class Octree {
-static const unsigned short MAXDEPTH = 4;
+static const unsigned short MAXDEPTH = 10;
+BlockShader blockShader = BlockShader("Core/VertexShader.txt", "Core/FragmentShader.txt");
+
 public:
 	Octree();
 	~Octree();
+
+	void DeleteNode(uint32_t LocCode);
+
+	void DeleteNode(OctreeNode* node);
+
 	OctreeNode* GetNode(uint32_t LocCode);
 
 	/* Insert a node into the octree. NOTE: Currently overwrites existing nodes */
@@ -41,15 +48,25 @@ public:
 	/* Remove nodes. TODO: Implement this*/
 	void RemoveNode(uint32_t LocCode);
 
-	/* Renders the node at a given level of detail. A detail of 0 means just one block for this node.
+	/* Adds a mesh at a given level of detail. A detail of 0 means just one block for this node.
 	A detail of 1 means 8 blocks inside the node are also seen etc. */
-	void RenderNode(Renderer renderer, uint32_t LocCode, size_t detail);
+	void CreateMesh(Renderer * renderer, uint32_t LocCode, size_t detail);
 	
-	/* Renders the node as one big block, without considering child nodes */
-	void RenderNode(Renderer renderer, uint32_t LocCode);
+	/* Add a block to the renderer, without considering child nodes */
+	void CreateMesh(Renderer * renderer, uint32_t LocCode);
+	
+	/* Stage the mesh... NOTE: this appends(!) to the mesh vector*/
+	void StageMesh(Renderer* renderer);
+
+	/* Here for testing purposes. Creates random tree at the given height */
+	void InsertRandomNodes(Renderer * renderer, OctreeNode* node, size_t depth);
+	void InsertRandomNodes(Renderer* renderer, size_t depth);
+
+	/* Render the blocks that were staged by createMesh() */
+	void Render(Renderer* renderer, Camera camera, const unsigned int WIDTH, const unsigned int HEIGHT);
 	
 private:
-	OctreeNode root;
+	OctreeNode * root;
 
 	/* Get the depth of the voxel corresponding to the location code
 	The depth is relative to the root node, which has depth 0
