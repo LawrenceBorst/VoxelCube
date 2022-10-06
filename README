@@ -3,6 +3,11 @@
 WORK IN PROGRESS
 Simple voxel game using chunked procedural map rendering.
 
+Done:
+- Use octrees to store and render blocks
+- Cull inner faces to save memory
+
 Todo:
-- change the map octree into a DAG for compression
 - Create chunk manager (loader and deloader)
+- Use chunk manager to employ level of detail rendering
+- change the map octree into a DAG for octree compression
