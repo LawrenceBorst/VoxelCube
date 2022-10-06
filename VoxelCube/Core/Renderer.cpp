@@ -22,30 +22,16 @@ void Renderer::StageMesh(unsigned int VAO, unsigned int VBO) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 }
 
-void Renderer::CreateCube(uint32_t x, uint32_t y, uint32_t z, uint32_t width) {
+void Renderer::CreateCube(uint32_t x, uint32_t y, uint32_t z, uint32_t width, uint8_t visibility) {
     // TODO: Separate the normals and positions to use int and unsigned ints separately
     // TODO: Also need to add color data(!)
     int X = (int)x;
     int Y = (int)y;
     int Z = (int)z;
     int WIDTH = (int)width;
-
+    
     std::vector<int> vertices = {
         // positions (3)        normals (3)
-        X,      Y,      Z,      0, 0, -1,
-        X+WIDTH,Y+WIDTH,Z,      0, 0, -1,
-        X+WIDTH,Y,      Z,      0, 0, -1,
-        X+WIDTH,Y+WIDTH,Z,      0, 0, -1,
-        X,      Y,      Z,      0, 0, -1,
-        X,      Y+WIDTH,Z,      0, 0, -1,
-
-        X,      Y,      Z+WIDTH,0, 0, 1,
-        X+WIDTH,Y,      Z+WIDTH,0, 0, 1,
-        X+WIDTH,Y+WIDTH,Z+WIDTH,0, 0, 1,
-        X+WIDTH,Y+WIDTH,Z+WIDTH,0, 0, 1,
-        X,      Y+WIDTH,Z+WIDTH,0, 0, 1,
-        X,      Y,      Z+WIDTH,0, 0, 1,
-
         X,      Y+WIDTH,Z+WIDTH,-1, 0, 0,
         X,      Y+WIDTH,Z,      -1, 0, 0,
         X,      Y,      Z,      -1, 0, 0,
@@ -73,9 +59,56 @@ void Renderer::CreateCube(uint32_t x, uint32_t y, uint32_t z, uint32_t width) {
         X+WIDTH,Y+WIDTH,Z+WIDTH,0, 1, 0,
         X,      Y+WIDTH,Z,      0, 1, 0,
         X,      Y+WIDTH,Z+WIDTH,0, 1, 0,
+
+        X,      Y,      Z,      0, 0, -1,
+        X+WIDTH,Y+WIDTH,Z,      0, 0, -1,
+        X+WIDTH,Y,      Z,      0, 0, -1,
+        X+WIDTH,Y+WIDTH,Z,      0, 0, -1,
+        X,      Y,      Z,      0, 0, -1,
+        X,      Y+WIDTH,Z,      0, 0, -1,
+
+        X,      Y,      Z+WIDTH,0, 0, 1,
+        X+WIDTH,Y,      Z+WIDTH,0, 0, 1,
+        X+WIDTH,Y+WIDTH,Z+WIDTH,0, 0, 1,
+        X+WIDTH,Y+WIDTH,Z+WIDTH,0, 0, 1,
+        X,      Y+WIDTH,Z+WIDTH,0, 0, 1,
+        X,      Y,      Z+WIDTH,0, 0, 1,
     };
 
-    this->vertexArray.insert(this->vertexArray.end(), vertices.begin(), vertices.end());    // Append vertices above to vertexArray
+    // All faces visibile
+    if ((visibility >> 7) & 1U) {
+        this->vertexArray.insert(this->vertexArray.end(), vertices.begin(), vertices.end());
+        return;
+    }
+    // No faces visible
+    if (!((visibility >> 6) & 1U)) {
+        return;
+    }
+    // Front x
+    if ((visibility >> 5) & 1U) {
+        this->vertexArray.insert(this->vertexArray.end(), vertices.begin() + 0, vertices.begin() + 36);
+    }
+    // Back x
+    if ((visibility >> 4) & 1U) {
+        this->vertexArray.insert(this->vertexArray.end(), vertices.begin() + 36, vertices.begin() + 72);
+    }
+    // Front y
+    if ((visibility >> 3) & 1U) {
+        this->vertexArray.insert(this->vertexArray.end(), vertices.begin() + 72, vertices.begin() + 108);
+    }
+    // Back y
+    if ((visibility >> 2) & 1U) {
+        this->vertexArray.insert(this->vertexArray.end(), vertices.begin() + 108, vertices.begin() + 144);
+    }
+    // Front z
+    if ((visibility >> 1) & 1U) {
+        this->vertexArray.insert(this->vertexArray.end(), vertices.begin() + 144, vertices.begin() + 180);
+    }
+    // Back z
+    if ((visibility >> 0) & 1U) {
+        this->vertexArray.insert(this->vertexArray.end(), vertices.begin() + 180, vertices.begin() + 216);
+    }
+
 
 	return;
 };

@@ -14,8 +14,8 @@ public:
 	/* Stages the VAO and VBO for a voxel mesh with **size** triangles */
 	void StageMesh(unsigned int VAO, unsigned int VBO);
 
-	/* Adds a cube to the vertex array */
-	void CreateCube(uint32_t x, uint32_t y, uint32_t z, uint32_t width);
+	/* Adds a cube to the vertex array. Visibility is the visibility bitmap defined in Octree.h */
+	void CreateCube(uint32_t x, uint32_t y, uint32_t z, uint32_t width, uint8_t visibility);
 
 	/* For now, does multiple things. TODO: Split this up into smaller bits */
 	void RenderMesh(BlockShader * shader, Camera camera, const unsigned int WIDTH, const unsigned int HEIGHT);

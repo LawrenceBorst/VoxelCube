@@ -21,11 +21,12 @@
 struct OctreeNode {
 	OctreeNode* Children[8] = { nullptr };
 	OctreeNode* Parent = { nullptr };
-	uint32_t id;	// Implicitly contains the block code at leafs. Otherwise the sum of all block codes in the node.
+	uint16_t id = 0;	// Implicitly contains the block code at leafs. Otherwise the sum of all block codes in the node.
 	uint32_t LocCode;
 	glm::vec4 color;
-	bool isLeaf;
-	bool isVisible;
+	bool isLeaf = false;
+	uint8_t visibility = (uint8_t)(255);	// Visibility bitmask. Order is: all_faces, at_least_one_face, x_small, x_big, y_small, y_big, z_small, z_big
+	OctreeNode(OctreeNode* p, uint32_t LocCode) : Parent(p),LocCode(LocCode) { };
 };
 
 class Octree {
@@ -40,6 +41,7 @@ public:
 
 	void DeleteNode(OctreeNode* node);
 
+	/* Gets a node. If the node does not exist, returns a nullptr */
 	OctreeNode* GetNode(uint32_t LocCode);
 
 	/* Insert a node into the octree. NOTE: Currently overwrites existing nodes */
@@ -64,6 +66,17 @@ public:
 
 	/* Render the blocks that were staged by createMesh() */
 	void Render(Renderer* renderer, Camera camera, const unsigned int WIDTH, const unsigned int HEIGHT);
+
+	/* Updates the visibility of a node at the LocCode */
+	void UpdateVisibility(uint32_t LocCode);
+
+	/* Get a position from a location code */
+	inline glm::u32vec3 LocCodeToPos(uint32_t LocCode);
+
+	/* Gets a location code from a position
+	Recall that different sized blocks can be found at a position, hence the need for the depth
+	NOTE: Requires a valid LocCode to work, otherwise returns garbage */
+	inline uint32_t PosToLocCode(glm::u32vec3, size_t depth);
 	
 private:
 	OctreeNode * root;
@@ -73,4 +86,11 @@ private:
 	Example: GetLocDepth(...0001011001) = 2*/
 	uint32_t GetLocDepth(uint32_t LocCode);
 	std::unordered_map<uint32_t, OctreeNode*> DAGhash;
+
+	/* Update the visibility bitmap
+	Sets the nth bit of it to val */
+	inline void UpdateVisibilityCode(uint8_t &visibility, uint8_t n, bool val);
+
+	/* Get the nth bit of the a visibility bitmap */
+	inline bool GetVisibilityCode(uint8_t& visibility, uint8_t n);
 };

@@ -104,9 +104,9 @@ int main() {
     gWorld.InsertNode((uint32_t)(pow(2, 24) + pow(2, 9)), color);    // 000...01100111
     gWorld.InsertNode((uint32_t)(pow(2, 21) + pow(2, 12)), color);    // 000...01100111
     */
-    gWorld.InsertRandomNodes(&grenderer, 10);
+    gWorld.InsertRandomNodes(&grenderer, 6);
 
-    gWorld.CreateMesh(&grenderer, (uint32_t)(1), 11);
+    gWorld.CreateMesh(&grenderer, (uint32_t)(1), 4);
     gWorld.StageMesh(&grenderer);
 
     /******************
